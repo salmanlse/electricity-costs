@@ -109,6 +109,12 @@ html{background:var(--color-bg)} body{margin:0 auto;max-width:1240px;padding:28p
 
   <h2 id="options-section">Cost of electricity by source, Rs per kWh</h2>
   <section class="grid3" id="optiles" data-draw="optiles" data-source="options" aria-label="Cost per kWh by source"></section>
+
+  <h2 id="chart-section">Cost per kWh compared</h2>
+  <section class="card" id="rank">
+    <div class="legend"><span><i class="sw" style="background:#17808E"></i>Grid</span><span><i class="sw" style="background:#E09F2C"></i>Captive gas</span><span><i class="sw" style="background:#D9531E"></i>Furnace oil</span><span><i class="sw" style="background:#8A97A3"></i>Other fuels</span><span><i class="sw ref"></i>Grid B-3</span></div>
+    <div class="chart" data-draw="rank" data-source="options" style="min-height:220px"></div>
+  </section>
 </div>
 
 <script>// https://d3js.org v7.9.0 Copyright 2010-2023 Mike Bostock
@@ -586,7 +592,7 @@ dash.draw('rank', (el) => {
   el.replaceChildren();
   const field = window.foMode === 'full' ? 'full' : 'cash';
   const RANK_HIDE = ['solar', 'solar_bat', 'wh_auc', 'grid_incr', 'wh_non'];
-  const rows = dash.data('options').data.filter((r) => !RANK_HIDE.includes(r.key)).sort((a, b) => a[field] - b[field]);
+  const rows = dash.data('options').data.filter((r) => !OPT_HIDE.includes(r.key)).sort((a, b) => a[field] - b[field]);
   const grid = rows.find((r) => r.key === 'grid');
   const W = Math.max(300, el.clientWidth || 700);
   const svg = d3.select(el).append('svg').attr('width', '100%');
@@ -597,6 +603,7 @@ dash.draw('rank', (el) => {
   svg.attr('viewBox', `0 0 ${W} ${H}`); el.style.minHeight = H + 'px';
   const vw = measure(svg, '000.00', 12) + 8;
   const x = d3.scaleLinear([0, d3.max(rows, (r) => r[field])], [lw, W - vw]);
+  if (grid) svg.append('line').attr('x1', x(grid[field])).attr('x2', x(grid[field])).attr('y1', 0).attr('y2', H).style('stroke', 'var(--cds-chart-reference)').style('stroke-dasharray', '4 3').style('stroke-width', 1.5).style('pointer-events', 'none');
   const tip = tipBox(el);
   rows.forEach((r, i) => {
     const y0 = top + i * rowH;
@@ -610,7 +617,6 @@ dash.draw('rank', (el) => {
       .on('mousemove', (ev) => showTip(el, tip, ev, r.option, [[c, 'Running cost', 'Rs ' + fmt2(r.cash)], [null, 'Full cost, new plant', 'Rs ' + fmt2(r.full)], [null, 'vs grid (running)', (r.vs_grid > 0 ? '+' : '') + fmt2(r.vs_grid)]]))
       .on('mouseleave', () => { tip.hidden = true; });
   });
-  if (grid) svg.append('line').attr('x1', x(grid[field])).attr('x2', x(grid[field])).attr('y1', 0).attr('y2', H).style('stroke', 'var(--cds-chart-reference)').style('stroke-dasharray', '4 3').style('stroke-width', 1.5).style('pointer-events', 'none');
 });
 
 dash.draw('monthly', (el) => {
